@@ -91,8 +91,9 @@ def get_args():
     p.add_argument('-c', '--channels', type=int, action='store', dest='channels', default=DEFAULT_CHANNELS)
     p.add_argument('-r', '--rate', type=int, action='store', dest='rate', default=DEFAULT_RATE)
     p.add_argument('--input-device-index', type=int, action='store', dest='input_device_index', default=DEFAULT_INPUT_DEVICE_INDEX)
+    p.add_argument('--playback', action='store_true', help='playback the complete recording')
     p.add_argument('--nobackup', action='store_true', help='delete scratch directory when finished')
-    p.add_argument('-v', '--version', action='version', version='%(prog)s v0.0.1')
+    p.add_argument('-v', '--version', action='version', version='%(prog)s v0.0.2')
     return p.parse_args()
 
 
@@ -129,6 +130,8 @@ if __name__ == "__main__":
         for i in range(counter):
             output.writeframes(data[i][1])
         output.close()
+        if args.playback:
+            play(args.file_out)
 
     if args.nobackup:
         shutil.rmtree(args.dir_scratch)
