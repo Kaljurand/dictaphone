@@ -1,10 +1,6 @@
-"""
-    Records audio to a WAV file
+#!/usr/bin/env python
 
-    Usage:
-        python dictaphone.py [output WAV file] [(optional) --nobackup]
-"""
-
+import argparse
 import sys
 import os
 import time
@@ -14,24 +10,23 @@ import pyaudio
 import wave
 import audioop
 
+DEFAULT_CHANNELS = 2
+DEFAULT_RATE = 44100
+DEFAULT_INPUT_DEVICE_INDEX = None
+
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
-CHANNELS = 2
-RATE = 44100
-THRESHOLD_MULTIPLIER = 6
-THRESHOLD_TIME = 3
+#THRESHOLD_MULTIPLIER = 6
+#THRESHOLD_TIME = 3
 
 audio = pyaudio.PyAudio()
-counter = 0
 
 def input_thread(L):
-    raw_input()
+    raw_input("Recording... (press <Enter> to stop)")
     L.append(None)
 
 def play(wave_filename):
-    """
-        Plays a WAV file
-    """
+    """Plays a WAV file"""
     wf = wave.open(wave_filename, 'rb')
 
     p = pyaudio.PyAudio()
@@ -58,17 +53,12 @@ def play(wave_filename):
     p.terminate()
 
 
-def record(output_filename):
-    """
-        Records audio until key pressed, then saves to file
-    """
-    global counter
-
-    play("beep_hi.wav")
-    print "Recording... Press <Enter> to stop"
+def record(args):
+    """Records audio until key pressed"""
     stream = audio.open(format=FORMAT,
-                        channels=CHANNELS,
-                        rate=RATE,
+                        channels=args.channels,
+                        rate=args.rate,
+                        input_device_index=args.input_device_index,
                         input=True,
                         frames_per_buffer=CHUNK)
 
@@ -81,47 +71,64 @@ def record(output_filename):
             break
         data = stream.read(CHUNK)
         frames.append(data)
+    return frames
 
-    play("beep_lo.wav")
-    print "Stopped recording."
 
-    # save the audio data
-    wf = wave.open("scratch/%s.wav" % counter, 'wb')
-    wf.setnchannels(CHANNELS)
+def save_as_wave(args, frames, counter=0):
+    """Saves the given frames as WAV"""
+    wf = wave.open(os.path.join(args.dir_scratch, str(counter) + '.wav'), 'wb')
+    wf.setnchannels(args.channels)
     wf.setsampwidth(audio.get_sample_size(FORMAT))
-    wf.setframerate(RATE)
+    wf.setframerate(args.rate)
     wf.writeframes(b''.join(frames))
     wf.close()
 
-    counter += 1
 
-    print "Recording saved."
+def get_args():
+    p = argparse.ArgumentParser(description='Stop-go recording of audio in terminal')
+    p.add_argument('--dir-scratch', type=str, action='store', dest='dir_scratch', default='scratch')
+    p.add_argument('-o', '--out', type=str, action='store', dest='file_out', required=True)
+    p.add_argument('-c', '--channels', type=int, action='store', dest='channels', default=DEFAULT_CHANNELS)
+    p.add_argument('-r', '--rate', type=int, action='store', dest='rate', default=DEFAULT_RATE)
+    p.add_argument('--input-device-index', type=int, action='store', dest='input_device_index', default=DEFAULT_INPUT_DEVICE_INDEX)
+    p.add_argument('--nobackup', action='store_true', help='delete scratch directory when finished')
+    p.add_argument('-v', '--version', action='version', version='%(prog)s v0.0.1')
+    return p.parse_args()
+
 
 if __name__ == "__main__":
+    args = get_args()
 
-    if not os.path.exists("scratch"):
-        os.makedirs("scratch")
+    if not os.path.exists(args.dir_scratch):
+        os.makedirs(args.dir_scratch)
 
-    output_filename = sys.argv[1]
-
+    counter = 0
     try:
         while True:
-            enter = raw_input("Press <Enter> to start recording \n")
-            record(output_filename)
+            enter = raw_input("Waiting... (press <Enter> to start recording or Ctrl-D to finish)")
+            play("beep_hi.wav")
+            frames = record(args)
+            play("beep_lo.wav")
+            print 'Stopped recording, saving as file #{0} ...'.format(counter)
+            save_as_wave(args, frames, counter)
+            counter += 1
+    except EOFError:
+        print ''
     except KeyboardInterrupt:
-        pass
+        print ''
 
-    data= []
+    data = []
     for i in range(counter):
-        w = wave.open("scratch/%s.wav" % i, 'rb')
+        w = wave.open(os.path.join(args.dir_scratch, str(i) + '.wav'), 'rb')
         data.append( [w.getparams(), w.readframes(w.getnframes())] )
         w.close()
 
-    output = wave.open(output_filename, 'wb')
-    output.setparams(data[0][0])
-    for i in range(counter):
-        output.writeframes(data[i][1])
-    output.close()
+    if len(data):
+        output = wave.open(args.file_out, 'wb')
+        output.setparams(data[0][0])
+        for i in range(counter):
+            output.writeframes(data[i][1])
+        output.close()
 
-    if len(sys.argv) > 2 and sys.argv[2] == "--nobackup":
-        shutil.rmtree('scratch')
+    if args.nobackup:
+        shutil.rmtree(args.dir_scratch)

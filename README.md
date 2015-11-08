@@ -1,12 +1,38 @@
-# dictaphone
-Stop-go recording of audio in terminal
+Dictaphone
+==========
 
-Dictaphone lets you record audio by pressing \<Enter\> to start/stop recording as many times as you like. At the end of each session, Dictaphone saves your audio to a WAV file.
+Dictaphone is a Python commandline program that lets you record audio
+by pressing \<Enter\> to start/stop recording as many times as you like.
+At the end of each session, the audio is saved to a WAV file.
+When Ctrl-D is pressed all previously saved files are combined into a single WAV file.
+
+Usage example:
+
+    dictaphone.py -otest.wav -c 1 -r 16000
+
+
+Dependencies
+------------
 
 PortAudio and PyAudio are required.
 
-Usage:
+Install:
 
-    python dictaphone.py [output WAV file]
+    pip install pyaudio
 
-Press \<Enter\> to start and stop recording. Press CTRL+C to end the session. Intermediary WAV files are saved in the `scratch` folder.
+Version history
+---------------
+
+### v0.0.1
+
+Based on <https://github.com/shbhrsaha/dictaphone> with the following changes:
+
+- more commandline options
+- earcons converted to mono
+- some refactoring
+
+
+Useful docs
+-----------
+
+- <http://wiki.audacityteam.org/wiki/USB_mic_on_Linux>
