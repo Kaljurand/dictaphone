@@ -2,13 +2,18 @@ Dictaphone
 ==========
 
 Dictaphone is a Python commandline program that lets you record audio
-by pressing \<Enter\> to start/stop recording as many times as you like.
+by pressing a button to start/stop recording as many times as you like.
 At the end of each session, the audio is saved to a WAV file.
 When Ctrl-D is pressed all previously saved files are combined into a single WAV file.
 
-Usage example:
+Usage example (press `<Enter>`):
 
-    dictaphone.py -otest.wav -c 1 -r 16000
+    dictaphone_ui.py -otest.wav -c 1 -r 16000 --playback
+
+
+Usage example (press a GPIO button):
+
+    dictaphone_ui.py -otest.wav -c 1 -r 16000 --playback --ui-type gpio
 
 
 Dependencies
@@ -36,3 +41,12 @@ Useful docs
 -----------
 
 - <http://wiki.audacityteam.org/wiki/USB_mic_on_Linux>
+
+
+TODO
+----
+
+- add an arg for possible input devices: GPIO/button, ENTER, VAD
+- add an arg for possible output feedbacks: GPIO/led, beep
+- compress to flac and upload to dropbox or drive
+- transcribe
