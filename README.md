@@ -8,12 +8,12 @@ When Ctrl-D is pressed all previously saved files are combined into a single WAV
 
 Usage example (press `<Enter>`):
 
-    dictaphone_ui.py -otest.wav -c 1 -r 16000 --playback
+    dictaphone_ui.py -otest.wav -c 1 -r 16000 --playback --ui-in=kb
 
 
 Usage example (press a GPIO button):
 
-    dictaphone_ui.py -otest.wav -c 1 -r 16000 --playback --ui-type gpio
+    dictaphone_ui.py -otest.wav -c 1 -r 16000 --playback --ui-in=gpiobtn --ui-out=gpioled,beep
 
 
 Dependencies

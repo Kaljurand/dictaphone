@@ -4,6 +4,9 @@ from dictaphone import DEFAULT_CHANNELS, DEFAULT_RATE, DEFAULT_INPUT_DEVICE_INDE
 import argparse
 import os
 
+DEFAULT_UI_IN = set(['kb'])
+DEFAULT_UI_OUT = set(['beep', 'print'])
+
 # TODO:  put into classes that implement an abstract class
 LedPin = 12
 BtnPin = 7
@@ -55,8 +58,10 @@ def destroy_gpio():
     GPIO.cleanup()                     # Release resource
 
 def get_args():
+    csv = lambda x : set([el for el in x.split(',')])
     p = argparse.ArgumentParser(description='Stop-go recording of audio')
-    p.add_argument('--ui-type', type=str, action='store', dest='ui_type', default='kb', help='UI type, one of {kb, gpio}')
+    p.add_argument('--ui-in', type=csv, action='store', dest='ui_in', default=DEFAULT_UI_IN, help='input UI, subset of {kb,gpiobtn}')
+    p.add_argument('--ui-out', type=csv, action='store', dest='ui_out', default=DEFAULT_UI_OUT, help='output UI, subset of {beep,print,gpioled}')
     p.add_argument('--dir-scratch', type=str, action='store', dest='dir_scratch', default='scratch')
     p.add_argument('-o', '--out', type=str, action='store', dest='file_out', required=True)
     p.add_argument('-c', '--channels', type=int, action='store', dest='channels', default=DEFAULT_CHANNELS)
@@ -64,13 +69,14 @@ def get_args():
     p.add_argument('--input-device-index', type=int, action='store', dest='input_device_index', default=DEFAULT_INPUT_DEVICE_INDEX)
     p.add_argument('--playback', action='store_true', help='playback the complete recording')
     p.add_argument('--nobackup', action='store_true', help='delete scratch directory when finished')
-    p.add_argument('-v', '--version', action='version', version='%(prog)s v0.0.3')
+    p.add_argument('-v', '--version', action='version', version='%(prog)s v0.0.4')
     return p.parse_args()
 
 if __name__ == "__main__":
     args = get_args()
 
-    if args.ui_type == 'gpio':
+    # TODO: decouple
+    if 'gpiobtn' in args.ui_in and 'gpioled' in args.ui_out:
         import RPi.GPIO as GPIO
 
         wait_for_start = wait_for_start_gpio
@@ -87,10 +93,13 @@ if __name__ == "__main__":
     try:
         while True:
             wait_for_start()
-            play("beep_hi.wav")
+            if 'beep' in args.ui_out:
+                play("beep_hi.wav")
             frames = record(args.channels, args.rate, args.input_device_index, wait_for_stop)
-            play("beep_lo.wav")
-            print 'Stopped recording, saving as file #{0} ...'.format(counter)
+            if 'beep' in args.ui_out:
+                play("beep_lo.wav")
+            if 'print' in args.ui_out:
+                print 'Stopped recording, saving as file #{0} ...'.format(counter)
             file_out = os.path.join(args.dir_scratch, str(counter) + '.wav')
             save_as_wave(file_out, frames, args.channels, args.rate)
             counter += 1
