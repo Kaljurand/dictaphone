@@ -5,9 +5,11 @@ import argparse
 import os
 import time
 import shutil
+import transcriber
 
 DEFAULT_UI_IN = set(['kb'])
 DEFAULT_UI_OUT = set(['beep', 'print'])
+DEFAULT_URI_TRANSCRIBER='ws://bark.phon.ioc.ee:82/dev/duplex-speech-api/ws/speech'
 
 # TODO:  put into classes that implement an abstract class
 LedPin = 12
@@ -61,17 +63,18 @@ def destroy_gpio():
 
 def get_args():
     csv = lambda x : set([el for el in x.split(',')])
-    p = argparse.ArgumentParser(description='Stop-go recording of audio')
+    p = argparse.ArgumentParser(description='Transcribing dictaphone')
     p.add_argument('--ui-in', type=csv, action='store', dest='ui_in', default=DEFAULT_UI_IN, help='input UI, subset of {kb,gpiobtn}')
     p.add_argument('--ui-out', type=csv, action='store', dest='ui_out', default=DEFAULT_UI_OUT, help='output UI, subset of {beep,print,gpioled}')
     p.add_argument('--dir-base', type=str, action='store', dest='dir_base', default='.')
+    p.add_argument('--uri-transcriber', type=str, action='store', dest='uri_transcriber', default=DEFAULT_URI_TRANSCRIBER)
     p.add_argument('-c', '--channels', type=int, action='store', dest='channels', default=DEFAULT_CHANNELS)
     p.add_argument('-r', '--rate', type=int, action='store', dest='rate', default=DEFAULT_RATE)
     p.add_argument('--input-device-index', type=int, action='store', dest='input_device_index', default=DEFAULT_INPUT_DEVICE_INDEX)
     p.add_argument('--playback', action='store_true', help='playback the complete recording')
     p.add_argument('--transcribe', action='store_true', help='transcribe the complete recording')
     p.add_argument('--nokeep', action='store_true', help='do not keep the recording (for testing)')
-    p.add_argument('-v', '--version', action='version', version='%(prog)s v0.0.5')
+    p.add_argument('-v', '--version', action='version', version='%(prog)s v0.1.0')
     return p.parse_args()
 
 if __name__ == "__main__":
@@ -119,10 +122,15 @@ if __name__ == "__main__":
     if data:
         file_out = os.path.join(dir_out, 'all.wav')
         save_data_as_wave(file_out, data, counter)
+        if args.transcribe:
+            # TODO: make more configurable
+            file_out_transcription = os.path.join(dir_out, 'all.txt')
+            transcription = transcriber.transcribe(file_out, args.uri_transcriber, '', 32000, None, None)
+            with open(file_out_transcription, 'w') as text_file:
+                #print(transcription, file=text_file)
+                text_file.write(transcription)
         if args.playback:
             play(file_out)
-        if args.transcribe:
-            transcribe(file_out)
 
     if args.nokeep:
         shutil.rmtree(dir_out)

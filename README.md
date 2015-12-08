@@ -4,11 +4,12 @@ Dictaphone
 Dictaphone is a Python commandline program that lets you record audio
 by pressing a button to start/stop recording as many times as you like.
 At the end of each session, the audio is saved to a WAV file.
-When Ctrl-D is pressed all previously saved files are combined into a single WAV file.
+When Ctrl-D is pressed all previously saved files are combined into a single WAV file
+and optionally transcribed.
 
 Usage example (press `<Enter>`):
 
-    dictaphone_ui.py -c 1 -r 16000 --playback --ui-in=kb
+    dictaphone_ui.py -c 1 -r 16000 --playback --ui-in=kb --transcribe
 
 
 Usage example (press a GPIO button):
@@ -27,6 +28,11 @@ Install:
 
 Version history
 ---------------
+
+### v0.1.0
+
+- recordings are now stored in directories named by timestamps
+- optional Estonian transcription using <https://github.com/alumae/kaldi-gstreamer-server>
 
 ### v0.0.1
 
@@ -49,5 +55,6 @@ TODO
 - add an arg for possible input devices: GPIO/button, ENTER, VAD
 - add an arg for possible output feedbacks: GPIO/led, beep
 - compress to flac and upload to dropbox, drive, soundcloud, ...
-- transcribe
+- show (preliminary) transcription during recording
+- do final transcription with <https://github.com/alumae/kaldi-offline-transcriber>
 - query over recordings, e.g. "timeframe:10-1234 speaker:id0 phrase:'elas metsas mutionu'"
