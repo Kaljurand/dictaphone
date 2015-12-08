@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 
-import sys
 import os
 import time
-import shutil
 import thread
 import pyaudio
 import wave
-import audioop
 
 DEFAULT_CHANNELS = 2
 DEFAULT_RATE = 44100

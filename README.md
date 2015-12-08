@@ -8,12 +8,12 @@ When Ctrl-D is pressed all previously saved files are combined into a single WAV
 
 Usage example (press `<Enter>`):
 
-    dictaphone_ui.py -otest.wav -c 1 -r 16000 --playback --ui-in=kb
+    dictaphone_ui.py -c 1 -r 16000 --playback --ui-in=kb
 
 
 Usage example (press a GPIO button):
 
-    dictaphone_ui.py -otest.wav -c 1 -r 16000 --playback --ui-in=gpiobtn --ui-out=gpioled,beep
+    dictaphone_ui.py -c 1 -r 16000 --playback --ui-in=gpiobtn --ui-out=gpioled,beep
 
 
 Dependencies
@@ -48,5 +48,6 @@ TODO
 
 - add an arg for possible input devices: GPIO/button, ENTER, VAD
 - add an arg for possible output feedbacks: GPIO/led, beep
-- compress to flac and upload to dropbox or drive
+- compress to flac and upload to dropbox, drive, soundcloud, ...
 - transcribe
+- query over recordings, e.g. "timeframe:10-1234 speaker:id0 phrase:'elas metsas mutionu'"

@@ -3,6 +3,8 @@
 from dictaphone import DEFAULT_CHANNELS, DEFAULT_RATE, DEFAULT_INPUT_DEVICE_INDEX, play, record, save_as_wave, save_data_as_wave, get_all_data
 import argparse
 import os
+import time
+import shutil
 
 DEFAULT_UI_IN = set(['kb'])
 DEFAULT_UI_OUT = set(['beep', 'print'])
@@ -62,18 +64,20 @@ def get_args():
     p = argparse.ArgumentParser(description='Stop-go recording of audio')
     p.add_argument('--ui-in', type=csv, action='store', dest='ui_in', default=DEFAULT_UI_IN, help='input UI, subset of {kb,gpiobtn}')
     p.add_argument('--ui-out', type=csv, action='store', dest='ui_out', default=DEFAULT_UI_OUT, help='output UI, subset of {beep,print,gpioled}')
-    p.add_argument('--dir-scratch', type=str, action='store', dest='dir_scratch', default='scratch')
-    p.add_argument('-o', '--out', type=str, action='store', dest='file_out', required=True)
+    p.add_argument('--dir-base', type=str, action='store', dest='dir_base', default='.')
     p.add_argument('-c', '--channels', type=int, action='store', dest='channels', default=DEFAULT_CHANNELS)
     p.add_argument('-r', '--rate', type=int, action='store', dest='rate', default=DEFAULT_RATE)
     p.add_argument('--input-device-index', type=int, action='store', dest='input_device_index', default=DEFAULT_INPUT_DEVICE_INDEX)
     p.add_argument('--playback', action='store_true', help='playback the complete recording')
-    p.add_argument('--nobackup', action='store_true', help='delete scratch directory when finished')
-    p.add_argument('-v', '--version', action='version', version='%(prog)s v0.0.4')
+    p.add_argument('--transcribe', action='store_true', help='transcribe the complete recording')
+    p.add_argument('--nokeep', action='store_true', help='do not keep the recording (for testing)')
+    p.add_argument('-v', '--version', action='version', version='%(prog)s v0.0.5')
     return p.parse_args()
 
 if __name__ == "__main__":
     args = get_args()
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    dir_out = os.path.join(args.dir_base, timestr)
 
     # TODO: decouple
     if 'gpiobtn' in args.ui_in and 'gpioled' in args.ui_out:
@@ -84,8 +88,8 @@ if __name__ == "__main__":
         setup = setup_gpio
         destroy = destroy_gpio
 
-    if not os.path.exists(args.dir_scratch):
-        os.makedirs(args.dir_scratch)
+    if not os.path.exists(dir_out):
+        os.makedirs(dir_out)
 
     setup()
 
@@ -100,7 +104,7 @@ if __name__ == "__main__":
                 play("beep_lo.wav")
             if 'print' in args.ui_out:
                 print 'Stopped recording, saving as file #{0} ...'.format(counter)
-            file_out = os.path.join(args.dir_scratch, str(counter) + '.wav')
+            file_out = os.path.join(dir_out, str(counter) + '.wav')
             save_as_wave(file_out, frames, args.channels, args.rate)
             counter += 1
     except EOFError:
@@ -110,12 +114,15 @@ if __name__ == "__main__":
         destroy()
         print ''
 
-    data = get_all_data(args.dir_scratch, counter)
+    data = get_all_data(dir_out, counter)
 
     if data:
-        save_data_as_wave(args.file_out, data, counter)
+        file_out = os.path.join(dir_out, 'all.wav')
+        save_data_as_wave(file_out, data, counter)
         if args.playback:
-            play(args.file_out)
+            play(file_out)
+        if args.transcribe:
+            transcribe(file_out)
 
-    if args.nobackup:
-        shutil.rmtree(args.dir_scratch)
+    if args.nokeep:
+        shutil.rmtree(dir_out)
